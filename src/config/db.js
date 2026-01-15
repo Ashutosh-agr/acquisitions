@@ -12,8 +12,8 @@ export const pool = new Pool({
 
   // Important for serverless environments
   max: 5,
-  idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 2_000,
+  idleTimeoutMillis: 10_000,
+  connectionTimeoutMillis: 10_000,
 });
 
 pool.on('connect', () => {

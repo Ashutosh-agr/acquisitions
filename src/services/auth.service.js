@@ -12,9 +12,10 @@ export const hashPassword = async (password) => {
 };
 
 export const createUser = async({name, email, password, role='user'}) => {
-  const client = await pool.connect();
+  let client;
+  try {
+    client = await pool.connect();
 
-  try{
     await client.query('BEGIN');
 
     const existingUser = await client.query(
@@ -22,13 +23,13 @@ export const createUser = async({name, email, password, role='user'}) => {
       [email]
     );
 
-    if(existingUser.rows.length > 0) throw new Error('User already exists');
+    if (existingUser.rows.length > 0) throw new Error('User already exists');
 
     const passwordHash = await hashPassword(password);
 
     const insertRes = await client.query(
       'INSERT INTO users (name,email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role, created_at',
-      [name,email,passwordHash,role]
+      [name, email, passwordHash, role]
     );
 
     await client.query('COMMIT');
@@ -37,10 +38,12 @@ export const createUser = async({name, email, password, role='user'}) => {
 
     logger.info(`New User with email: ${newUser.email} created successfully.`);
     return newUser;
-  }catch(err){
+  } catch (err) {
     await client.query('ROLLBACK');
     logger.info('Error creating the user', err);
     throw err;
+  } finally {
+    if (client) client.release();
   }
 };
 
@@ -54,29 +57,36 @@ export const passwordCompare = async (password, hashedPassword) => {
 };
 
 export const authenticateUser = async ({email, password}) => {
-  try{
-    const client = await pool.connect();
+  let client;
+  try {
+    client = await pool.connect();
+
     const existingUser = await client.query(
       'SELECT * FROM users WHERE email = $1 LIMIT 1',
       [email]
     );
 
-    if(existingUser.rows.length === 0){
+    if (existingUser.rows.length === 0) {
       throw new Error('User do not exist');
     }
 
     const existUser = existingUser.rows[0];
 
-    const passwordValidate = await passwordCompare(password, existUser.password);
+    const passwordValidate = await passwordCompare(
+      password,
+      existUser.password
+    );
 
-    if(!passwordValidate){
+    if (!passwordValidate) {
       throw new Error('Invalid password');
     }
 
     logger.info(`User with ${email} authenticated successfully.`);
     return existUser;
-  }catch(err){
+  } catch (err) {
     logger.error('Error during authenticating User', err);
     throw new Error(err);
+  } finally {
+    if (client) client.release();
   }
 };
