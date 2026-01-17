@@ -20,25 +20,26 @@ export const getAllUsers = async () => {
   }
 };
 
-export const usersById = async (id) => {
+export const usersById = async id => {
   let client;
-  try{
+  try {
     client = await pool.connect();
 
     const byId = await client.query(
-      'SELECT id,name,email,created_at,updated_at FROM users WHERE id=$1',[id]
+      'SELECT id,name,email,created_at,updated_at FROM users WHERE id=$1',
+      [id]
     );
 
     return byId.rows[0];
-  }catch(err){
-    logger.error('Error during fetching users by id',err);
+  } catch (err) {
+    logger.error('Error during fetching users by id', err);
     throw err;
-  }finally {
+  } finally {
     if (client) client.release();
   }
 };
 
-export const updateUserById = async ({id,name,email,password,role}) => {
+export const updateUserById = async ({ id, name, email, password, role }) => {
   let client;
   try {
     client = await pool.connect();
@@ -101,7 +102,7 @@ export const updateUserById = async ({id,name,email,password,role}) => {
   }
 };
 
-export const deleteUserById = async (id) => {
+export const deleteUserById = async id => {
   let client;
   try {
     client = await pool.connect();
@@ -124,6 +125,6 @@ export const deleteUserById = async (id) => {
     logger.error('Error during deleting users', error);
     throw error;
   } finally {
-    if(client) client.release();
+    if (client) client.release();
   }
 };

@@ -5,4 +5,4 @@ export const patchUserSchema = z.object({
   email: z.string().max(255).toLowerCase().trim().optional(),
   password: z.string().min(6).max(128).optional(),
   role: z.enum(['admin', 'user']).optional(),
-}); 
+});

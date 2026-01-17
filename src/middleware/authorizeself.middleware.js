@@ -1,7 +1,7 @@
 export const authorizeselfMiddleware = (req, res, next) => {
   const paramId = req.params.id;
 
-  if(req.user.role === 'admin') {
+  if (req.user.role === 'admin') {
     return next();
   }
 

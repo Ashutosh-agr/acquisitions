@@ -2,16 +2,16 @@ import bcrypt from 'bcrypt';
 import logger from '#config/logger.js';
 import { pool } from '#config/db.js';
 
-export const hashPassword = async (password) => {
-  try{
+export const hashPassword = async password => {
+  try {
     return await bcrypt.hash(password, 12);
-  }catch(err){
+  } catch (err) {
     logger.info('Error hashing password', err);
     throw err;
   }
 };
 
-export const createUser = async({name, email, password, role='user'}) => {
+export const createUser = async ({ name, email, password, role = 'user' }) => {
   let client;
   try {
     client = await pool.connect();
@@ -56,7 +56,7 @@ export const passwordCompare = async (password, hashedPassword) => {
   }
 };
 
-export const authenticateUser = async ({email, password}) => {
+export const authenticateUser = async ({ email, password }) => {
   let client;
   try {
     client = await pool.connect();

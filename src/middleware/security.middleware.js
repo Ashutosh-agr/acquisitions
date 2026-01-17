@@ -3,8 +3,8 @@ import { slidingWindow } from '@arcjet/node';
 import logger from '#config/logger.js';
 
 const securityMiddleware = async (req, res, next) => {
-  try{
-    const role = req.user ?.role || 'guest' ;
+  try {
+    const role = req.user?.role || 'guest';
 
     let limit;
     let message;
@@ -26,14 +26,28 @@ const securityMiddleware = async (req, res, next) => {
         break;
     }
 
-    const client = aj.withRule(slidingWindow({mode:'LIVE', interval:'1m', max:limit, name:`${role}-rate-limit`}));
+    const client = aj.withRule(
+      slidingWindow({
+        mode: 'LIVE',
+        interval: '1m',
+        max: limit,
+        name: `${role}-rate-limit`,
+      })
+    );
 
     const decision = await client.protect(req);
 
-    if(decision.isDenied() && decision.reason.isBot()){
-      logger.warn('Bot request blocked ',{ip: req.ip, userAgent:req.get('User-Agent'), path: req.path});
+    if (decision.isDenied() && decision.reason.isBot()) {
+      logger.warn('Bot request blocked ', {
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        path: req.path,
+      });
 
-      res.status(403).json({error: 'Forbidden', message: 'Automated request are not allowed'});
+      res.status(403).json({
+        error: 'Forbidden',
+        message: 'Automated request are not allowed',
+      });
     }
 
     if (decision.isDenied() && decision.reason.isShield()) {
@@ -44,12 +58,10 @@ const securityMiddleware = async (req, res, next) => {
         method: req.method,
       });
 
-      res
-        .status(403)
-        .json({
-          error: 'Forbidden',
-          message: 'Request blocked by security policy.',
-        });
+      res.status(403).json({
+        error: 'Forbidden',
+        message: 'Request blocked by security policy.',
+      });
     }
 
     if (decision.isDenied() && decision.reason.isRateLimit()) {
@@ -59,18 +71,19 @@ const securityMiddleware = async (req, res, next) => {
         path: req.path,
       });
 
-      res
-        .status(403)
-        .json({
-          error: 'Forbidden',
-          message,
-        });
+      res.status(403).json({
+        error: 'Forbidden',
+        message,
+      });
     }
 
     next();
-  }catch(err){
-    console.log('Arcjet middleware error: ',err);
-    res.status(500).json({error: 'Internal Server Error', message: 'Something went wrong with security middleware'});
+  } catch (err) {
+    console.log('Arcjet middleware error: ', err);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Something went wrong with security middleware',
+    });
   }
 };
 

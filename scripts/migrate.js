@@ -7,7 +7,7 @@ const { Client } = pkg;
 
 const client = new Client({
   connectionString: process.env.DB_URL,
-  ssl: {rejectUnauthorized: false},
+  ssl: { rejectUnauthorized: false },
 });
 
 await client.connect();
@@ -24,13 +24,13 @@ await client.query(
 const migrationDir = path.resolve('migrations');
 const files = fs.readdirSync(migrationDir).sort();
 
-for(const file of files) {
-
+for (const file of files) {
   const res = await client.query(
-    'SELECT 1 FROM schema_migrations WHERE version = $1',[file]
+    'SELECT 1 FROM schema_migrations WHERE version = $1',
+    [file]
   );
 
-  if(res.rowCount > 0){
+  if (res.rowCount > 0) {
     console.log(`Skipping file ${file}`);
     continue;
   }

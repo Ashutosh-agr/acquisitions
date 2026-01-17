@@ -6,38 +6,44 @@ import { jwtToken } from '#utils/jwt.js';
 import { cookies } from '#utils/cookies.js';
 
 export const signUp = async (req, res, next) => {
-  try{
+  try {
     const validationResult = signUpSchema.safeParse(req.body);
 
-    if(!validationResult.success) {
+    if (!validationResult.success) {
       return res.status(400).json({
         error: 'Validation failed',
         details: formatValidationError(validationResult.error),
       });
     }
 
-    const {name, email,password, role} = validationResult.data;
+    const { name, email, password, role } = validationResult.data;
 
-    const user = await createUser({name, email, password, role});
+    const user = await createUser({ name, email, password, role });
 
-    const token = jwtToken.sign({id: user.id, email: user.email, role: user.role});
+    const token = jwtToken.sign({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
-    cookies.set(res,'token',token);
+    cookies.set(res, 'token', token);
 
     logger.info(`User registered successfully: ${email}`);
 
     return res.status(201).json({
       message: 'User registered successfully',
-      user:{
-        id: user.id,name: user.name,email: user.email, role: user.role,
-      }
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
+  } catch (err) {
+    logger.error('Sign up error', err);
 
-  }catch(err){
-    logger.error('Sign up error',err);
-
-    if(err.message === 'User with email already exists'){
-      res.status(400).json({error: 'Email already exists'});
+    if (err.message === 'User with email already exists') {
+      res.status(400).json({ error: 'Email already exists' });
     }
 
     next(err);
@@ -45,7 +51,7 @@ export const signUp = async (req, res, next) => {
 };
 
 export const signIn = async (req, res, next) => {
-  try{
+  try {
     const validationResult = signInSchema.safeParse(req.body);
 
     if (!validationResult.success) {
@@ -55,9 +61,9 @@ export const signIn = async (req, res, next) => {
       });
     }
 
-    const {email, password} = validationResult.data;
+    const { email, password } = validationResult.data;
 
-    const user = await authenticateUser({email,password});
+    const user = await authenticateUser({ email, password });
 
     const token = jwtToken.sign({
       id: user.id,
@@ -70,16 +76,19 @@ export const signIn = async (req, res, next) => {
     logger.info(`User login successfully: ${email}`);
     res.status(200).json({
       message: 'User login successfully',
-      user:{
+      user: {
         id: user.id,
         email: user.email,
         role: user.role,
-      }
+      },
     });
-  }catch(err){
-    logger.error('Error during sign in',err);
-    if (err.message === 'User do not exist' || err.message === 'Invalid password') {
-      return res.status(401).json({error: 'Invalid credentials'});
+  } catch (err) {
+    logger.error('Error during sign in', err);
+    if (
+      err.message === 'User do not exist' ||
+      err.message === 'Invalid password'
+    ) {
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     next(err);
@@ -87,15 +96,15 @@ export const signIn = async (req, res, next) => {
 };
 
 export const signOut = async (req, res, next) => {
-  try{
-    cookies.clear(res,'token');
+  try {
+    cookies.clear(res, 'token');
 
     logger.info('User logout successfully');
     res.status(200).json({
       message: 'User logout successfully',
     });
-  }catch (e){
-    logger.error('Error during sign out',e);
+  } catch (e) {
+    logger.error('Error during sign out', e);
     next(e);
   }
 };
