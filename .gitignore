@@ -3,4 +3,5 @@ node_modules
 .env.*
 .env
 logs
-docker-compose.yml
+coverage
+.dockerignore
