@@ -1,0 +1,36 @@
+name: Deploy to Kubernetes
+on:
+  push:
+    branches:
+      - main
+jobs:
+ deploy:
+   runs-on: ubuntu-latest
+
+   steps:
+     - name: Checkout Code
+       uses: actions/checkout@v4
+
+     - name: Set up Kubectl
+       uses: azure/setup-kubectl@v3
+
+     - name: Configure kubeconfig
+       run: |
+         mkdir -p $HOME/.kube
+         echo "${{ secrets.KUBE_CONFIG }}" > $HOME/.kube/config
+     
+     - name: Create Kubernetes Secrets
+       run: |
+         kubectl create secret generic acquisitions-secrets \
+            --from-literal=DB_URL="${{ secrets.DB_URL }}" \
+            --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            --from-literal=ARCJET_KEY="${{ secrets.ARCJET_KEY }}"
+
+     - name: Update image in deployment
+       run: |
+        sed -i "s|ashu003/acquisitions:latest|ashu003/acquisitions:${{ github.sha }}|" k8s/deployment.yaml
+
+     - name: Deploy to Kubernetes
+       run: |
+           kubectl apply -f k8s/deployment.yaml
+           kubectl apply -f k8s/service.yaml
